@@ -1,17 +1,18 @@
 <?php
-    $name = S_POST['name'];
-	$visitor_email = $_POST['email'];
+if (isset($POST['submit']))
+{
+    $name = $_POST['name'];
+	$subject = $_POST['subject'];
 	$message = $_POST['message'];
-	$email_form = 'cyberlinkrajat155@gmail.com';
-	$email_subject = "Linking With you";
-	$email_body = "User Name: $name\n". "User Email: $visitor_email.\n". "UserMessage: $message.\n';
+	$email_form = $POST['mail'];
 	
 	$to = "aspirarajat155@gmail"
-	$headers = "From: $email_from \r\n";
-	$headers = "Reply-To: $visitor_email \r\n";
-	mail($to, email_subject, $email_body, $headers);
-	header("Location: inderx.html);
-
+	$headers = "From:" .$email_from "\r\n";
+    $txt = "You have received an email from" .$name.".\n\n".$message;
+	mail($to, $subject, $txt, $headers);
+	header("Location: index.php?mailsend");
+}
 ?>
+	
 	
 	
