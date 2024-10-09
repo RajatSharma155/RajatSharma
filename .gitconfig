@@ -1,0 +1,11 @@
+[safe]
+	directory = %(prefix)///coe-fs.engr.tamu.edu/Grads/CSCE_616/lab-0-itsrajatsharma
+	directory = %(prefix)///coe-fs.engr.tamu.edu/Grads/CSCE_616/lab-1-itsrajatsharma
+	directory = %(prefix)///coe-fs.engr.tamu.edu/Grads/CSCE_616/lab-2-itsrajatsharma
+	directory = %(prefix)///coe-fs.engr.tamu.edu/Grads/CSCE_616/lab-3-itsrajatsharma
+	directory = %(prefix)///coe-fs.engr.tamu.edu/Grads/CSCE_616/lab-4-itsrajatsharma
+[user]
+	name = Rajat Sharma
+	email = evening23@tamu.edu
+[gui]
+	recentrepo = C:/Users/aspir/RajatSharma
