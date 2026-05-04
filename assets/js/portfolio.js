@@ -33,6 +33,7 @@
   var d = PORTFOLIO_DATA;
   renderHero(d.personal);
   wireResumeBtn(d.personal.resumeFile);
+  initCounters();
   renderSkills(d.skills);
   renderExperience(d.experience);
   renderProjects(d.projects);
@@ -60,6 +61,31 @@
         '<span class="hero-stat-label">' + e(s.label) + '</span>' +
         '</div>';
     }).join('');
+  }
+
+  /* ============================================================
+     STAT COUNTERS — animated number count-up on load
+  ============================================================ */
+  function initCounters() {
+    qsa('.hero-stat-value').forEach(function(node) {
+      var raw     = node.textContent.trim();
+      var match   = raw.match(/^(\d+(?:\.\d+)?)(.*)/);
+      if (!match) return;
+      var target  = parseFloat(match[1]);
+      var suffix  = match[2];
+      var decimal = raw.indexOf('.') !== -1;
+      var dur     = 1100;
+      var start   = null;
+      function step(ts) {
+        if (!start) start = ts;
+        var p = Math.min((ts - start) / dur, 1);
+        var v = target * (1 - Math.pow(1 - p, 3));
+        node.textContent = (decimal ? v.toFixed(1) : Math.floor(v)) + suffix;
+        if (p < 1) requestAnimationFrame(step);
+      }
+      node.textContent = (decimal ? '0.0' : '0') + suffix;
+      setTimeout(function() { requestAnimationFrame(step); }, 400);
+    });
   }
 
   /* ============================================================
@@ -241,11 +267,7 @@
       '<p class="contact-info-sub">I\'m actively looking for internship opportunities in Computer Architecture, VLSI Design, and Verification. Feel free to reach out!</p>' +
       '<div class="contact-detail">' +
         '<div class="cd-icon"><i class="fas fa-map-marker-alt"></i></div>' +
-        '<div class="cd-text">' + e(p.location || 'College Station, TX') + '</div>' +
-      '</div>' +
-      '<div class="contact-detail">' +
-        '<div class="cd-icon"><i class="fas fa-phone"></i></div>' +
-        '<div class="cd-text">' + e(p.phone) + '</div>' +
+        '<div class="cd-text">' + e(p.location || 'Austin, TX') + '</div>' +
       '</div>' +
       '<div class="contact-detail">' +
         '<div class="cd-icon"><i class="fas fa-envelope"></i></div>' +

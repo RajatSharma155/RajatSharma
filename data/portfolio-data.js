@@ -9,7 +9,6 @@ var PORTFOLIO_DATA = {
     ],
     "photo": "images/Linkdin3.png",
     "objective": "Design Engineering Intern at Cadence Design Systems, and MS Computer Engineering student at Texas A&M (GPA 4.0/4.0). Experienced in RTL design, computer architecture, SoC verification, and ASIC development.",
-    "phone": "+1 (979) 326-6025",
     "emails": [
       "rajatsharma.apply@tamu.edu",
       "rajatsharma.apply@gmail.com"
