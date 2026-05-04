@@ -145,7 +145,7 @@ section { padding: 7rem 0; background: rgba(1,1,8,0.55); }
 html:not(.light) .btn-outline {
   background: rgba(99,102,241,0.18);
   border-color: rgba(129,140,248,0.70);
-  color: #e0e4ff;
+  color: #ffffff;
   font-weight: 600;
   letter-spacing: 0.02em;
 }
