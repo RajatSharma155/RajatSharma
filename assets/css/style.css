@@ -142,6 +142,19 @@ section { padding: 7rem 0; background: rgba(1,1,8,0.55); }
 }
 .btn-outline { border: 1px solid rgba(129,140,248,0.45); color: var(--indigo-l); font-size: 0.82rem; }
 .btn-outline:hover { border-color: rgba(129,140,248,0.75); color: #fff; transform: translateY(-2px); }
+html:not(.light) .btn-outline {
+  background: rgba(99,102,241,0.18);
+  border-color: rgba(129,140,248,0.70);
+  color: #e0e4ff;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+html:not(.light) .btn-outline:hover {
+  background: rgba(99,102,241,0.32);
+  border-color: #818cf8;
+  color: #fff;
+  box-shadow: 0 0 18px rgba(99,102,241,0.35);
+}
 
 /* ============================================================
    NAVBAR
