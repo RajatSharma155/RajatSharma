@@ -30,6 +30,7 @@
   function qsa(sel){ return document.querySelectorAll(sel); }
 
   /* ── boot ────────────────────────────────────────────────── */
+  initThemeToggle();
   var d = PORTFOLIO_DATA;
   renderHero(d.personal);
   wireResumeBtn(d.personal.resumeFile);
@@ -62,6 +63,29 @@
         '<span class="hero-stat-label">' + e(s.label) + '</span>' +
         '</div>';
     }).join('');
+  }
+
+  /* ============================================================
+     THEME TOGGLE — dark ↔ light, persisted in localStorage
+  ============================================================ */
+  function initThemeToggle() {
+    var btn  = el('theme-toggle');
+    var icon = el('theme-icon');
+    if (!btn) return;
+
+    function apply(light) {
+      document.documentElement.classList.toggle('light', light);
+      icon.className = light ? 'fas fa-moon' : 'fas fa-sun';
+    }
+
+    /* restore saved preference (anti-FOUC already ran in <head>) */
+    apply(localStorage.getItem('rs-theme') === 'light');
+
+    btn.addEventListener('click', function() {
+      var isLight = !document.documentElement.classList.contains('light');
+      apply(isLight);
+      try { localStorage.setItem('rs-theme', isLight ? 'light' : 'dark'); } catch(e) {}
+    });
   }
 
   /* ============================================================

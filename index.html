@@ -10,6 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="assets/css/fontawesome-all.min.css" />
   <link rel="stylesheet" href="assets/css/style.css" />
+  <script>try{if(localStorage.getItem('rs-theme')==='light')document.documentElement.classList.add('light');}catch(e){}</script>
 </head>
 <body>
 
@@ -24,6 +25,9 @@
         <li><a href="#education"  class="nav-link">Education</a></li>
         <li><a href="#contact"    class="nav-link">Contact</a></li>
       </ul>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark theme">
+        <i class="fas fa-sun" id="theme-icon"></i>
+      </button>
       <button class="hamburger" id="hamburger" aria-label="Toggle menu">
         <span></span><span></span><span></span>
       </button>
