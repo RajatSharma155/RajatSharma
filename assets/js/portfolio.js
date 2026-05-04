@@ -76,6 +76,7 @@
     function apply(light) {
       document.documentElement.classList.toggle('light', light);
       icon.className = light ? 'fas fa-moon' : 'fas fa-sun';
+      initLightBackground(); /* start or stop canvas */
     }
 
     /* restore saved preference (anti-FOUC already ran in <head>) */
@@ -89,9 +90,136 @@
   }
 
   /* ============================================================
+     LIGHT BACKGROUND — full-page animated canvas (light mode only)
+  ============================================================ */
+  var _lightBgRaf = null;
+  function initLightBackground() {
+    var root   = document.documentElement;
+    var cvs    = document.getElementById('light-bg-canvas');
+
+    /* dark mode: remove canvas and stop loop */
+    if (!root.classList.contains('light')) {
+      if (cvs) cvs.remove();
+      _lightBgRaf = null;
+      return;
+    }
+    /* already running */
+    if (cvs && _lightBgRaf) return;
+    if (cvs) cvs.remove();
+
+    var canvas = document.createElement('canvas');
+    canvas.id  = 'light-bg-canvas';
+    canvas.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;';
+    document.body.insertBefore(canvas, document.body.firstChild);
+
+    var ctx = canvas.getContext('2d');
+    var W = 0, H = 0, frame = 0;
+
+    function resize() {
+      W = canvas.width  = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize, { passive: true });
+
+    /* orbs: x,y as fractions, r as fraction of max dimension */
+    var orbs = [
+      { x:0.12, y:0.10, r:0.48, vx:0.00016, vy:0.00014, c:'99,102,241',  a:0.20 },
+      { x:0.88, y:0.82, r:0.44, vx:-0.00013, vy:0.00018, c:'14,165,233', a:0.16 },
+      { x:0.55, y:0.42, r:0.36, vx:0.00018, vy:-0.00015, c:'236,72,153', a:0.13 },
+      { x:0.78, y:0.15, r:0.30, vx:-0.00020, vy:0.00014, c:'16,185,129', a:0.10 },
+      { x:0.18, y:0.78, r:0.32, vx:0.00015, vy:-0.00018, c:'245,158,11', a:0.09 },
+      { x:0.45, y:0.90, r:0.26, vx:-0.00014, vy:0.00016, c:'99,102,241', a:0.08 }
+    ];
+
+    function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
+
+    function draw(ts) {
+      if (!root.classList.contains('light')) { _lightBgRaf = null; return; }
+      _lightBgRaf = requestAnimationFrame(draw);
+      frame++;
+
+      /* base fill */
+      ctx.fillStyle = '#f5f7ff';
+      ctx.fillRect(0, 0, W, H);
+
+      /* animated orbs (blurred circles) */
+      orbs.forEach(function(o) {
+        o.x = clamp(o.x + o.vx, 0.05, 0.95);
+        o.y = clamp(o.y + o.vy, 0.05, 0.95);
+        if (o.x <= 0.05 || o.x >= 0.95) o.vx *= -1;
+        if (o.y <= 0.05 || o.y >= 0.95) o.vy *= -1;
+
+        var cx  = o.x * W;
+        var cy  = o.y * H;
+        var rad = o.r * Math.max(W, H);
+        var g   = ctx.createRadialGradient(cx, cy, 0, cx, cy, rad);
+        g.addColorStop(0,   'rgba(' + o.c + ',' + o.a + ')');
+        g.addColorStop(0.55,'rgba(' + o.c + ',' + (o.a * 0.35) + ')');
+        g.addColorStop(1,   'rgba(' + o.c + ',0)');
+
+        ctx.save();
+        ctx.filter = 'blur(48px)';
+        ctx.beginPath();
+        ctx.arc(cx, cy, rad, 0, Math.PI * 2);
+        ctx.fillStyle = g;
+        ctx.fill();
+        ctx.restore();
+      });
+
+      /* subtle animated wave across the bottom third */
+      ctx.save();
+      ctx.globalAlpha = 0.04;
+      ctx.fillStyle = '#6366f1';
+      var waveBase = H * 0.78;
+      ctx.beginPath();
+      ctx.moveTo(0, H);
+      for (var i = 0; i <= W; i += 4) {
+        var wy = waveBase +
+          Math.sin((i / W * 3 + frame * 0.006) * Math.PI) * 28 +
+          Math.sin((i / W * 7 - frame * 0.003) * Math.PI) * 14;
+        ctx.lineTo(i, wy);
+      }
+      ctx.lineTo(W, H);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
+      /* second wave (pink) */
+      ctx.save();
+      ctx.globalAlpha = 0.03;
+      ctx.fillStyle = '#ec4899';
+      var waveBase2 = H * 0.85;
+      ctx.beginPath();
+      ctx.moveTo(0, H);
+      for (var j = 0; j <= W; j += 4) {
+        var wy2 = waveBase2 +
+          Math.sin((j / W * 5 - frame * 0.004) * Math.PI) * 22 +
+          Math.sin((j / W * 9 + frame * 0.007) * Math.PI) * 10;
+        ctx.lineTo(j, wy2);
+      }
+      ctx.lineTo(W, H);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
+      /* grid */
+      ctx.strokeStyle = 'rgba(99,102,241,0.055)';
+      ctx.lineWidth   = 0.8;
+      var gs = 60;
+      ctx.beginPath();
+      for (var xi = 0; xi <= W; xi += gs) { ctx.moveTo(xi,0); ctx.lineTo(xi,H); }
+      for (var yi = 0; yi <= H; yi += gs) { ctx.moveTo(0,yi); ctx.lineTo(W,yi); }
+      ctx.stroke();
+    }
+    requestAnimationFrame(draw);
+  }
+
+  /* ============================================================
      PARTICLES — canvas floating dots in hero
   ============================================================ */
   function initParticles() {
+    if (document.documentElement.classList.contains('light')) return;
     var section = el('hero');
     if (!section) return;
     var canvas = document.createElement('canvas');
