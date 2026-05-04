@@ -26,23 +26,19 @@
   function qsa(sel){ return document.querySelectorAll(sel); }
 
   /* ── boot ────────────────────────────────────────────────── */
-  fetch('data/portfolio.json')
-    .then(function(r){ return r.json(); })
-    .then(function(d){
-      renderHero(d.personal);
-      renderSkills(d.skills);
-      renderExperience(d.experience);
-      renderProjects(d.projects);
-      renderEducation(d.education);
-      renderContact(d.personal);
-      renderFooter(d.personal);
-      initNav();
-      initScrollReveal();
-      initTyping(d.personal.taglines || [d.personal.tagline]);
-      initContactForm(d.personal.formEndpoint);
-      el('footer-year').textContent = new Date().getFullYear();
-    })
-    .catch(function(err){ console.error('portfolio.js:', err); });
+  var d = PORTFOLIO_DATA;
+  renderHero(d.personal);
+  renderSkills(d.skills);
+  renderExperience(d.experience);
+  renderProjects(d.projects);
+  renderEducation(d.education);
+  renderContact(d.personal);
+  renderFooter(d.personal);
+  initNav();
+  initScrollReveal();
+  initTyping(d.personal.taglines || [d.personal.tagline]);
+  initContactForm(d.personal.formEndpoint);
+  el('footer-year').textContent = new Date().getFullYear();
 
   /* ============================================================
      HERO
