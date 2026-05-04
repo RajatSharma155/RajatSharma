@@ -252,9 +252,9 @@
     ];
 
     var WAVES = [
-      { base:0.72, alpha:0.09, color:'#6366f1', f1:3,  s1: 0.006,  a1:34, f2:7, s2: 0.003,  a2:17 },
-      { base:0.81, alpha:0.07, color:'#0ea5e9', f1:5,  s1:-0.004,  a1:26, f2:9, s2: 0.007,  a2:12 },
-      { base:0.89, alpha:0.06, color:'#ec4899', f1:4,  s1: 0.005,  a1:20, f2:6, s2:-0.005,  a2:10 }
+      { base:0.70, alpha:0.28, color:'#6366f1', f1:3,  s1: 0.006,  a1:44, f2:7, s2: 0.003,  a2:22 },
+      { base:0.80, alpha:0.22, color:'#0ea5e9', f1:5,  s1:-0.004,  a1:34, f2:9, s2: 0.007,  a2:16 },
+      { base:0.88, alpha:0.18, color:'#ec4899', f1:4,  s1: 0.005,  a1:26, f2:6, s2:-0.005,  a2:13 }
     ];
 
     var PCOLS = ['99,102,241','14,165,233','236,72,153'];
@@ -267,7 +267,7 @@
             x: xi, y: yi,
             phase: Math.random() * Math.PI * 2,
             speed: 0.007 + Math.random() * 0.013,
-            maxA:  0.12 + Math.random() * 0.22,
+            maxA:  0.28 + Math.random() * 0.38,
             c: PCOLS[Math.floor(Math.random() * PCOLS.length)]
           });
         }
@@ -295,7 +295,7 @@
 
       /* aurora orbs */
       ctx.save();
-      ctx.filter = 'blur(72px)';
+      ctx.filter = 'blur(50px)';
       orbs.forEach(function(o) {
         o.x = clamp(o.x + o.vx, 0.05, 0.95);
         o.y = clamp(o.y + o.vy, 0.05, 0.95);
