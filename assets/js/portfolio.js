@@ -34,6 +34,7 @@
   renderHero(d.personal);
   wireResumeBtn(d.personal.resumeFile);
   initCounters();
+  initParticles();
   renderSkills(d.skills);
   renderExperience(d.experience);
   renderProjects(d.projects);
@@ -61,6 +62,57 @@
         '<span class="hero-stat-label">' + e(s.label) + '</span>' +
         '</div>';
     }).join('');
+  }
+
+  /* ============================================================
+     PARTICLES — canvas floating dots in hero
+  ============================================================ */
+  function initParticles() {
+    var section = el('hero');
+    if (!section) return;
+    var canvas = document.createElement('canvas');
+    canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;';
+    section.insertBefore(canvas, section.firstChild);
+
+    var ctx = canvas.getContext('2d');
+    var W, H, pts = [];
+    var COLORS = ['#818cf8','#38bdf8','#f472b6','#10b981'];
+    var COUNT  = 70;
+
+    function resize() {
+      W = canvas.width  = section.offsetWidth;
+      H = canvas.height = section.offsetHeight;
+    }
+    function mkPt() {
+      return {
+        x:  Math.random() * W,
+        y:  Math.random() * H,
+        r:  Math.random() * 1.4 + 0.4,
+        vx: (Math.random() - 0.5) * 0.25,
+        vy: (Math.random() - 0.5) * 0.25,
+        a:  Math.random() * 0.45 + 0.1,
+        c:  COLORS[Math.floor(Math.random() * COLORS.length)]
+      };
+    }
+    resize();
+    for (var i = 0; i < COUNT; i++) pts.push(mkPt());
+    window.addEventListener('resize', resize, { passive: true });
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      pts.forEach(function(p) {
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < -10 || p.x > W + 10 || p.y < -10 || p.y > H + 10) { Object.assign(p, mkPt()); }
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = p.c;
+        ctx.globalAlpha = p.a;
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+      requestAnimationFrame(draw);
+    }
+    requestAnimationFrame(draw);
   }
 
   /* ============================================================
@@ -228,7 +280,7 @@
           '<span class="edu-period">' + e(a.period) + '</span>' +
           locHtml +
         '</div>' +
-        '<a href="' + e(a.url) + '" class="edu-inst" target="_blank" rel="noopener"><i class="fas fa-graduation-cap"></i> ' + e(a.institution) + '</a>' +
+        '<a href="' + e(a.url) + '" class="edu-inst" target="_blank" rel="noopener"><i class="fas fa-graduation-cap"></i> ' + e(a.institution) + ' <i class="fas fa-external-link-alt"></i></a>' +
         '<div class="edu-courses-label">Relevant Courses</div>' +
         '<ul class="edu-courses-list">' +
         a.courses.map(function(c){ return '<li>' + e(c) + '</li>'; }).join('') +
