@@ -119,25 +119,41 @@
      STAT COUNTERS — animated number count-up on load
   ============================================================ */
   function initCounters() {
+    var container = el('hero-stats');
+    if (!container) return;
+    var done = false;
+
+    /* read original values BEFORE touching DOM — no "0" flash until in-view */
+    var items = [];
     qsa('.hero-stat-value').forEach(function(node) {
-      var raw     = node.textContent.trim();
-      var match   = raw.match(/^(\d+(?:\.\d+)?)(.*)/);
+      var raw   = node.textContent.trim();
+      var match = raw.match(/^(\d+(?:\.\d+)?)(.*)/);
       if (!match) return;
-      var target  = parseFloat(match[1]);
-      var suffix  = match[2];
-      var decimal = raw.indexOf('.') !== -1;
-      var dur     = 1100;
-      var start   = null;
+      items.push({ node: node, target: parseFloat(match[1]), suffix: match[2], decimal: raw.indexOf('.') !== -1 });
+    });
+
+    var io = new IntersectionObserver(function(entries) {
+      if (done || !entries[0].isIntersecting) return;
+      done = true;
+      io.disconnect();
+      var start = null, dur = 1200;
+      items.forEach(function(it) {
+        it.node.textContent = (it.decimal ? '0.0' : '0') + it.suffix;
+      });
       function step(ts) {
         if (!start) start = ts;
         var p = Math.min((ts - start) / dur, 1);
-        var v = target * (1 - Math.pow(1 - p, 3));
-        node.textContent = (decimal ? v.toFixed(1) : Math.floor(v)) + suffix;
+        var ease = 1 - Math.pow(1 - p, 3);
+        items.forEach(function(it) {
+          var n = it.target * ease;
+          it.node.textContent = (it.decimal ? n.toFixed(1) : Math.floor(n)) + it.suffix;
+        });
         if (p < 1) requestAnimationFrame(step);
       }
-      node.textContent = (decimal ? '0.0' : '0') + suffix;
-      setTimeout(function() { requestAnimationFrame(step); }, 400);
-    });
+      requestAnimationFrame(step);
+    }, { threshold: 0.6 });
+
+    io.observe(container);
   }
 
   /* ============================================================
@@ -190,11 +206,11 @@
     skills.forEach(function(s){ cols[s.column].push(s); });
 
     el('skills-grid').innerHTML = cols.map(function(col, ci){
-      return col.map(function(g){
-        return '<div class="skill-group col-' + ci + ' reveal">' +
+      return col.map(function(g, gi){
+        return '<div class="skill-group col-' + ci + ' reveal" style="transition-delay:' + (ci * 0.08) + 's">' +
           '<div class="skill-group-name">' + e(g.category) + '</div>' +
           '<div class="skill-tags">' +
-          g.items.map(function(t){ return '<span class="skill-tag">' + e(t) + '</span>'; }).join('') +
+          g.items.map(function(t, ti){ return '<span class="skill-tag" style="--tag-delay:' + (ti * 0.04) + 's">' + e(t) + '</span>'; }).join('') +
           '</div></div>';
       }).join('');
     }).join('');

@@ -436,9 +436,112 @@ section { padding: 7rem 0; }
   padding: 0.25rem 0.72rem;
   border-radius: 20px;
   font-weight: 500;
-  transition: all var(--ease);
+  transition: color var(--ease), background var(--ease), border-color var(--ease), box-shadow var(--ease);
+  /* entrance: hidden until parent gains .visible */
+  opacity: 0;
+  transform: translateY(6px) scale(0.9);
 }
-.skill-tag:hover { background: rgba(99,102,241,0.1); border-color: rgba(99,102,241,0.4); color: var(--indigo-l); }
+/* staggered wave-in when parent scroll-reveals */
+.skill-group.visible .skill-tag {
+  animation: tag-pop 0.45s cubic-bezier(.22,1,.36,1) var(--tag-delay, 0s) both;
+}
+@keyframes tag-pop {
+  from { opacity: 0; transform: translateY(8px) scale(0.88); }
+  to   { opacity: 1; transform: none; }
+}
+.skill-tag:hover {
+  background: rgba(99,102,241,0.12);
+  border-color: rgba(99,102,241,0.45);
+  color: var(--indigo-l);
+  box-shadow: 0 0 10px rgba(99,102,241,0.15);
+}
+
+/* ── Section background orbs ─────────────────────────────── */
+/* #about already has position:relative from body > * */
+#about::before {
+  content: '';
+  position: absolute;
+  width: 650px; height: 650px;
+  background: radial-gradient(circle, rgba(99,102,241,0.1) 0%, transparent 70%);
+  top: -120px; right: -150px;
+  border-radius: 50%;
+  filter: blur(90px);
+  pointer-events: none;
+  z-index: 0;
+  animation: orb-drift 18s ease-in-out infinite alternate;
+}
+#about::after {
+  content: '';
+  position: absolute;
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(236,72,153,0.07) 0%, transparent 70%);
+  bottom: -60px; left: -100px;
+  border-radius: 50%;
+  filter: blur(75px);
+  pointer-events: none;
+  z-index: 0;
+  animation: orb-drift 13s ease-in-out infinite alternate-reverse;
+}
+.skills-grid { position: relative; z-index: 1; }
+
+#experience::before {
+  content: '';
+  position: absolute;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(14,165,233,0.09) 0%, transparent 70%);
+  bottom: -100px; left: -80px;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  z-index: 0;
+  animation: orb-drift 16s ease-in-out infinite alternate;
+}
+#experience::after {
+  content: '';
+  position: absolute;
+  width: 350px; height: 350px;
+  background: radial-gradient(circle, rgba(99,102,241,0.07) 0%, transparent 70%);
+  top: -50px; right: -80px;
+  border-radius: 50%;
+  filter: blur(70px);
+  pointer-events: none;
+  z-index: 0;
+  animation: orb-drift 20s ease-in-out infinite alternate-reverse;
+}
+.timeline { position: relative; z-index: 1; }
+
+#projects::before {
+  content: '';
+  position: absolute;
+  width: 550px; height: 550px;
+  background: radial-gradient(circle, rgba(99,102,241,0.09) 0%, transparent 70%);
+  top: -80px; right: -120px;
+  border-radius: 50%;
+  filter: blur(85px);
+  pointer-events: none;
+  z-index: 0;
+  animation: orb-drift 14s ease-in-out infinite alternate;
+}
+.filter-tabs, .projects-grid { position: relative; z-index: 1; }
+
+#education::after {
+  content: '';
+  position: absolute;
+  width: 450px; height: 450px;
+  background: radial-gradient(circle, rgba(16,185,129,0.07) 0%, transparent 70%);
+  bottom: -80px; right: -100px;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  z-index: 0;
+  animation: orb-drift 17s ease-in-out infinite alternate-reverse;
+}
+.edu-grid, .cert-grid, .subsection-label { position: relative; z-index: 1; }
+
+@keyframes orb-drift {
+  from { transform: translate(0, 0) scale(1); }
+  to   { transform: translate(45px, 35px) scale(1.08); }
+}
 
 /* ============================================================
    EXPERIENCE
