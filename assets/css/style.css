@@ -73,8 +73,8 @@ input, textarea { font-family: inherit; }
 
 /* ── Layout ──────────────────────────────────────────────── */
 .container { max-width: 1100px; margin: 0 auto; padding: 0 2rem; }
-section { padding: 7rem 0; background: transparent; }
-#about, #projects, #contact { background: rgba(3,6,18,0.52); }
+section { padding: 7rem 0; background: rgba(1,1,8,0.78); }
+#about, #projects, #contact { background: rgba(3,6,18,0.82); }
 
 /* ── Scroll Reveal ───────────────────────────────────────── */
 .reveal {
@@ -192,6 +192,7 @@ section { padding: 7rem 0; background: transparent; }
   position: relative;
   overflow: hidden;
   padding-top: var(--nav-h);
+  background: transparent;
 }
 
 /* aurora blobs */
