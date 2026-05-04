@@ -73,8 +73,8 @@ input, textarea { font-family: inherit; }
 
 /* ── Layout ──────────────────────────────────────────────── */
 .container { max-width: 1100px; margin: 0 auto; padding: 0 2rem; }
-section { padding: 7rem 0; }
-#about, #projects, #contact { background: var(--bg-alt); }
+section { padding: 7rem 0; background: transparent; }
+#about, #projects, #contact { background: rgba(3,6,18,0.52); }
 
 /* ── Scroll Reveal ───────────────────────────────────────── */
 .reveal {

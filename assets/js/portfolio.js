@@ -35,7 +35,7 @@
   renderHero(d.personal);
   wireResumeBtn(d.personal.resumeFile);
   initCounters();
-  initParticles();
+  initDarkBackground();
   renderSkills(d.skills);
   renderExperience(d.experience);
   renderProjects(d.projects);
@@ -76,7 +76,8 @@
     function apply(light) {
       document.documentElement.classList.toggle('light', light);
       icon.className = light ? 'fas fa-moon' : 'fas fa-sun';
-      initLightBackground(); /* start or stop canvas */
+      initDarkBackground();
+      initLightBackground();
     }
 
     /* restore saved preference (anti-FOUC already ran in <head>) */
@@ -216,7 +217,145 @@
   }
 
   /* ============================================================
-     PARTICLES — canvas floating dots in hero
+     DARK BACKGROUND — full-page animated canvas (dark mode only)
+     aurora orbs + flowing waves + twinkling pixel grid
+  ============================================================ */
+  var _darkBgRaf = null;
+  function initDarkBackground() {
+    var root = document.documentElement;
+    var cvs  = document.getElementById('dark-bg-canvas');
+
+    if (root.classList.contains('light')) {
+      if (cvs) cvs.remove();
+      _darkBgRaf = null;
+      return;
+    }
+    if (cvs && _darkBgRaf) return;
+    if (cvs) cvs.remove();
+
+    var canvas = document.createElement('canvas');
+    canvas.id  = 'dark-bg-canvas';
+    canvas.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;';
+    document.body.insertBefore(canvas, document.body.firstChild);
+
+    var ctx = canvas.getContext('2d');
+    var W = 0, H = 0, frame = 0;
+    var GRID = 60;
+    var pixels = [];
+
+    var orbs = [
+      { x:0.14, y:0.22, r:0.62, vx:0.00013, vy:0.00010, c:'99,102,241',  a:0.24 },
+      { x:0.86, y:0.68, r:0.54, vx:-0.00010, vy:0.00015, c:'14,165,233', a:0.18 },
+      { x:0.50, y:0.50, r:0.44, vx:0.00015, vy:-0.00012, c:'236,72,153', a:0.14 },
+      { x:0.76, y:0.10, r:0.36, vx:-0.00018, vy:0.00010, c:'16,185,129', a:0.11 },
+      { x:0.22, y:0.82, r:0.40, vx:0.00012, vy:-0.00014, c:'99,102,241', a:0.12 }
+    ];
+
+    var WAVES = [
+      { base:0.72, alpha:0.09, color:'#6366f1', f1:3,  s1: 0.006,  a1:34, f2:7, s2: 0.003,  a2:17 },
+      { base:0.81, alpha:0.07, color:'#0ea5e9', f1:5,  s1:-0.004,  a1:26, f2:9, s2: 0.007,  a2:12 },
+      { base:0.89, alpha:0.06, color:'#ec4899', f1:4,  s1: 0.005,  a1:20, f2:6, s2:-0.005,  a2:10 }
+    ];
+
+    var PCOLS = ['99,102,241','14,165,233','236,72,153'];
+
+    function buildPixels() {
+      pixels = [];
+      for (var xi = GRID; xi < W; xi += GRID) {
+        for (var yi = GRID; yi < H; yi += GRID) {
+          pixels.push({
+            x: xi, y: yi,
+            phase: Math.random() * Math.PI * 2,
+            speed: 0.007 + Math.random() * 0.013,
+            maxA:  0.12 + Math.random() * 0.22,
+            c: PCOLS[Math.floor(Math.random() * PCOLS.length)]
+          });
+        }
+      }
+    }
+
+    function resize() {
+      W = canvas.width  = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+      buildPixels();
+    }
+    resize();
+    window.addEventListener('resize', resize, { passive: true });
+
+    function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
+
+    function draw() {
+      if (root.classList.contains('light')) { _darkBgRaf = null; return; }
+      _darkBgRaf = requestAnimationFrame(draw);
+      frame++;
+
+      /* base fill */
+      ctx.fillStyle = '#010108';
+      ctx.fillRect(0, 0, W, H);
+
+      /* aurora orbs */
+      ctx.save();
+      ctx.filter = 'blur(72px)';
+      orbs.forEach(function(o) {
+        o.x = clamp(o.x + o.vx, 0.05, 0.95);
+        o.y = clamp(o.y + o.vy, 0.05, 0.95);
+        if (o.x <= 0.05 || o.x >= 0.95) o.vx *= -1;
+        if (o.y <= 0.05 || o.y >= 0.95) o.vy *= -1;
+        var cx = o.x * W, cy = o.y * H;
+        var rad = o.r * Math.max(W, H);
+        var g = ctx.createRadialGradient(cx, cy, 0, cx, cy, rad);
+        g.addColorStop(0,    'rgba(' + o.c + ',' + o.a + ')');
+        g.addColorStop(0.45, 'rgba(' + o.c + ',' + (o.a * 0.28) + ')');
+        g.addColorStop(1,    'rgba(' + o.c + ',0)');
+        ctx.beginPath();
+        ctx.arc(cx, cy, rad, 0, Math.PI * 2);
+        ctx.fillStyle = g;
+        ctx.fill();
+      });
+      ctx.restore();
+
+      /* flowing waves */
+      WAVES.forEach(function(w) {
+        ctx.save();
+        ctx.globalAlpha = w.alpha;
+        ctx.fillStyle   = w.color;
+        ctx.beginPath();
+        ctx.moveTo(0, H);
+        for (var i = 0; i <= W; i += 4) {
+          var wy = w.base * H +
+            Math.sin((i / W * w.f1 + frame * w.s1) * Math.PI) * w.a1 +
+            Math.sin((i / W * w.f2 - frame * w.s2) * Math.PI) * w.a2;
+          ctx.lineTo(i, wy);
+        }
+        ctx.lineTo(W, H);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      });
+
+      /* twinkling pixel dots at grid intersections */
+      pixels.forEach(function(p) {
+        var a = (Math.sin(frame * p.speed + p.phase) * 0.5 + 0.5) * p.maxA;
+        if (a < 0.015) return;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 1.3, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(' + p.c + ',' + a + ')';
+        ctx.fill();
+      });
+
+      /* subtle grid */
+      ctx.strokeStyle = 'rgba(99,102,241,0.045)';
+      ctx.lineWidth   = 0.7;
+      ctx.beginPath();
+      for (var xi = 0; xi <= W; xi += GRID) { ctx.moveTo(xi, 0); ctx.lineTo(xi, H); }
+      for (var yi = 0; yi <= H; yi += GRID) { ctx.moveTo(0, yi); ctx.lineTo(W, yi); }
+      ctx.stroke();
+    }
+    requestAnimationFrame(draw);
+  }
+
+  /* ============================================================
+     PARTICLES — hero dots (dark mode, kept for hero depth)
   ============================================================ */
   function initParticles() {
     if (document.documentElement.classList.contains('light')) return;
