@@ -16,6 +16,8 @@
       "evening23@tamu.edu",
       "rajatsharma.apply@tamu.edu"
     ],
+    "location": "College Station, TX",
+    "formEndpoint": "https://formspree.io/f/YOUR_FORM_ID",
     "stats": [
       { "value": "3+",   "label": "Years Experience" },
       { "value": "10+",  "label": "Projects" },

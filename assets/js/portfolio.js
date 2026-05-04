@@ -1,313 +1,375 @@
+/* portfolio.js — renders all content from data/portfolio.json */
 (function () {
-    'use strict';
+  'use strict';
 
-    /* ── safe HTML escape ─────────────────────────────────── */
-    var _escDiv = document.createElement('div');
-    function esc(str) {
-        _escDiv.textContent = String(str);
-        return _escDiv.innerHTML;
-    }
+  /* ── safe text escape ───────────────────────────────────── */
+  var _esc = document.createElement('div');
+  function e(s) { _esc.textContent = String(s); return _esc.innerHTML; }
 
-    /* ── fetch data then render everything ───────────────── */
-    fetch('data/portfolio.json')
-        .then(function (r) { return r.json(); })
-        .then(function (data) {
-            renderHeader(data.personal);
-            renderIntro(data.personal, data.skills);
-            renderExperience(data.experience);
-            renderProjects(data.projects);
-            renderEducation(data.education);
-            renderContact(data.personal);
-            initContactForm();
-            startTypingAnimation(data.personal.taglines);
-        })
-        .catch(function (err) {
-            console.error('portfolio.js: failed to load data', err);
-        });
+  /* ── category → slug map ────────────────────────────────── */
+  var CAT_SLUG = {
+    'Computer Architecture / Microarchitecture': 'arch',
+    'VLSI Design / RTL / ASIC':                  'vlsi',
+    'Verification':                              'verif',
+    'Robotics / Embedded':                       'robot'
+  };
+  var CAT_LABEL = {
+    'Computer Architecture / Microarchitecture': 'Computer Architecture',
+    'VLSI Design / RTL / ASIC':                  'VLSI / RTL / ASIC',
+    'Verification':                              'Verification',
+    'Robotics / Embedded':                       'Robotics'
+  };
 
-    /* ============================================================
-       HEADER — typing animation cycling through taglines
-       ============================================================ */
-    function startTypingAnimation(taglines) {
-        var el = document.querySelector('#header .inner p');
-        if (!el || !taglines || !taglines.length) return;
+  /* ── helpers ─────────────────────────────────────────────── */
+  function el(id)  { return document.getElementById(id); }
+  function qs(sel) { return document.querySelector(sel); }
+  function qsa(sel){ return document.querySelectorAll(sel); }
 
-        var index   = 0;
-        var charIdx = 0;
-        var deleting = false;
-        var PAUSE_FULL   = 2200;
-        var PAUSE_EMPTY  = 400;
-        var SPEED_TYPE   = 55;
-        var SPEED_DELETE = 30;
+  /* ── boot ────────────────────────────────────────────────── */
+  fetch('data/portfolio.json')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      renderHero(d.personal);
+      renderSkills(d.skills);
+      renderExperience(d.experience);
+      renderProjects(d.projects);
+      renderEducation(d.education);
+      renderContact(d.personal);
+      renderFooter(d.personal);
+      initNav();
+      initScrollReveal();
+      initTyping(d.personal.taglines || [d.personal.tagline]);
+      initContactForm(d.personal.formEndpoint);
+      el('footer-year').textContent = new Date().getFullYear();
+    })
+    .catch(function(err){ console.error('portfolio.js:', err); });
 
-        el.innerHTML = '<span class="typed-text"></span><span class="typed-cursor"></span>';
-        var textEl = el.querySelector('.typed-text');
+  /* ============================================================
+     HERO
+  ============================================================ */
+  function renderHero(p) {
+    el('hero-name').textContent  = p.name;
+    el('hero-bio').textContent   = p.objective;
+    el('hero-photo').src         = p.photo;
+    el('hero-photo').alt         = p.name;
 
-        function tick() {
-            var current = taglines[index];
-            if (!deleting) {
-                charIdx++;
-                textEl.textContent = current.slice(0, charIdx);
-                if (charIdx === current.length) {
-                    deleting = true;
-                    setTimeout(tick, PAUSE_FULL);
-                    return;
-                }
-                setTimeout(tick, SPEED_TYPE);
-            } else {
-                charIdx--;
-                textEl.textContent = current.slice(0, charIdx);
-                if (charIdx === 0) {
-                    deleting = false;
-                    index = (index + 1) % taglines.length;
-                    setTimeout(tick, PAUSE_EMPTY);
-                    return;
-                }
-                setTimeout(tick, SPEED_DELETE);
-            }
+    el('hero-stats').innerHTML = (p.stats || []).map(function(s){
+      return '<div class="hero-stat">' +
+        '<span class="hero-stat-value">' + e(s.value) + '</span>' +
+        '<span class="hero-stat-label">' + e(s.label) + '</span>' +
+        '</div>';
+    }).join('');
+  }
+
+  /* ============================================================
+     TYPING ANIMATION
+  ============================================================ */
+  function initTyping(lines) {
+    var container = el('typed-text');
+    if (!container || !lines.length) return;
+
+    var i = 0, ci = 0, deleting = false;
+    var WAIT = 2400, REST = 380, SPD_T = 55, SPD_D = 28;
+
+    function tick() {
+      var line = lines[i];
+      if (!deleting) {
+        ci++;
+        container.textContent = line.slice(0, ci);
+        if (ci === line.length) { deleting = true; setTimeout(tick, WAIT); return; }
+        setTimeout(tick, SPD_T);
+      } else {
+        ci--;
+        container.textContent = line.slice(0, ci);
+        if (ci === 0) {
+          deleting = false;
+          i = (i + 1) % lines.length;
+          setTimeout(tick, REST);
+          return;
         }
-        setTimeout(tick, 800);
+        setTimeout(tick, SPD_D);
+      }
     }
+    setTimeout(tick, 900);
+  }
 
-    /* ============================================================
-       INTRO
-       ============================================================ */
-    function renderIntro(personal, skills) {
-        var article = document.querySelector('#intro');
+  /* ============================================================
+     SKILLS
+  ============================================================ */
+  function renderSkills(skills) {
+    var cols = [[], [], []];
+    skills.forEach(function(s){ cols[s.column].push(s); });
 
-        /* profile photo */
-        var img = article.querySelector('.profile-photo');
-        img.src = personal.photo;
-        img.alt = personal.name;
+    el('skills-grid').innerHTML = cols.map(function(col, ci){
+      return col.map(function(g){
+        return '<div class="skill-group col-' + ci + ' reveal">' +
+          '<div class="skill-group-name">' + e(g.category) + '</div>' +
+          '<div class="skill-tags">' +
+          g.items.map(function(t){ return '<span class="skill-tag">' + e(t) + '</span>'; }).join('') +
+          '</div></div>';
+      }).join('');
+    }).join('');
+  }
 
-        /* objective */
-        article.querySelector('.objective').textContent = personal.objective;
+  /* ============================================================
+     EXPERIENCE
+  ============================================================ */
+  function renderExperience(exp) {
+    el('timeline').innerHTML = exp.map(function(x){
+      return '<div class="tl-item reveal">' +
+        '<div class="tl-dot"></div>' +
+        '<div class="tl-header">' +
+          '<div><div class="tl-role">' + e(x.title) + '</div>' +
+          '<div class="tl-company">' + e(x.company) + '</div></div>' +
+          '<span class="tl-period">' + e(x.period) + '</span>' +
+        '</div>' +
+        '<ul class="tl-bullets">' +
+        x.bullets.map(function(b){ return '<li>' + e(b) + '</li>'; }).join('') +
+        '</ul></div>';
+    }).join('');
+  }
 
-        /* stats bar */
-        if (personal.stats) {
-            article.querySelector('.stats-bar').innerHTML =
-                personal.stats.map(function (s) {
-                    return '<div class="stat-item">' +
-                        '<span class="stat-value">' + esc(s.value) + '</span>' +
-                        '<span class="stat-label">' + esc(s.label) + '</span>' +
-                        '</div>';
-                }).join('');
+  /* ============================================================
+     PROJECTS + FILTER
+  ============================================================ */
+  function renderProjects(projects) {
+    /* filter tabs */
+    var tabsHtml = '<button class="filter-btn active" data-filter="all">All</button>' +
+      projects.map(function(c){
+        return '<button class="filter-btn" data-filter="' + e(c.category) + '">' +
+          e(CAT_LABEL[c.category] || c.category) + '</button>';
+      }).join('');
+    el('filter-tabs').innerHTML = tabsHtml;
+
+    /* project cards */
+    var cardsHtml = '';
+    projects.forEach(function(cat){
+      var slug = CAT_SLUG[cat.category] || 'other';
+      cat.items.forEach(function(p){
+        cardsHtml +=
+          '<div class="proj-card reveal" data-cat="' + slug + '" data-category="' + e(cat.category) + '">' +
+          '<span class="proj-badge">' + e(CAT_LABEL[cat.category] || cat.category) + '</span>' +
+          '<div class="proj-title">' + e(p.title) + '</div>' +
+          '<div class="proj-period">' + e(p.period) + '</div>' +
+          '<ul class="proj-bullets">' +
+          p.bullets.map(function(b){ return '<li>' + e(b) + '</li>'; }).join('') +
+          '</ul></div>';
+      });
+    });
+    el('projects-grid').innerHTML = cardsHtml;
+
+    /* wire filter */
+    el('filter-tabs').addEventListener('click', function(ev){
+      var btn = ev.target.closest('.filter-btn');
+      if (!btn) return;
+      qsa('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      var filter = btn.dataset.filter;
+      qsa('.proj-card').forEach(function(card){
+        var show = filter === 'all' || card.dataset.category === filter;
+        card.classList.toggle('hidden', !show);
+      });
+    });
+  }
+
+  /* ============================================================
+     EDUCATION
+  ============================================================ */
+  function renderEducation(edu) {
+    el('edu-grid').innerHTML = edu.academics.map(function(a){
+      return '<div class="edu-card reveal">' +
+        '<div class="edu-degree">' + e(a.degree) + '</div>' +
+        '<div class="edu-field">' + e(a.field) + '</div>' +
+        '<div class="edu-period">' + e(a.period) + '</div>' +
+        '<a href="' + e(a.url) + '" class="edu-inst" target="_blank" rel="noopener">' + e(a.institution) + '</a>' +
+        '<div class="edu-courses-label">Relevant Courses</div>' +
+        '<ul class="edu-courses-list">' +
+        a.courses.map(function(c){ return '<li>' + e(c) + '</li>'; }).join('') +
+        '</ul></div>';
+    }).join('');
+
+    el('cert-grid').innerHTML = edu.certifications.map(function(cat){
+      return cat.items.map(function(cert){
+        var inner = '<div class="cert-cat-label">' + e(cat.category) + '</div>';
+        if (cert.url) {
+          inner += '<a href="' + e(cert.url) + '" class="cert-link" target="_blank" rel="noopener">' + e(cert.title) + '</a>';
+        } else {
+          inner += '<div class="cert-name">' + e(cert.title) + '</div>';
+          inner += '<div class="cert-meta">' + e(cert.issuer);
+          if (cert.period) inner += ' &nbsp;·&nbsp; ' + e(cert.period);
+          if (cert.provider) inner += ' &nbsp;·&nbsp; ' + e(cert.provider);
+          if (cert.instructor) inner += '<br><em>' + e(cert.instructor) + '</em>';
+          inner += '</div>';
+          if (cert.modules && cert.modules.length) {
+            inner += '<ul class="cert-modules">' +
+              cert.modules.map(function(m){ return '<li>' + e(m) + '</li>'; }).join('') +
+              '</ul>';
+          }
         }
+        return '<div class="cert-card reveal">' + inner + '</div>';
+      }).join('');
+    }).join('');
+  }
 
-        /* skills — group by column */
-        var columns = [[], [], []];
-        skills.forEach(function (s) { columns[s.column].push(s); });
+  /* ============================================================
+     CONTACT
+  ============================================================ */
+  function renderContact(p) {
+    el('contact-info').innerHTML =
+      '<div class="contact-info-title">Let\'s Connect</div>' +
+      '<p class="contact-info-sub">I\'m actively looking for internship opportunities in Computer Architecture, VLSI Design, and Verification. Feel free to reach out!</p>' +
+      '<div class="contact-detail">' +
+        '<div class="cd-icon"><i class="fas fa-map-marker-alt"></i></div>' +
+        '<div class="cd-text">' + e(p.location || 'College Station, TX') + '</div>' +
+      '</div>' +
+      '<div class="contact-detail">' +
+        '<div class="cd-icon"><i class="fas fa-phone"></i></div>' +
+        '<div class="cd-text">' + e(p.phone) + '</div>' +
+      '</div>' +
+      '<div class="contact-detail">' +
+        '<div class="cd-icon"><i class="fas fa-envelope"></i></div>' +
+        '<div class="cd-text">' +
+        p.emails.map(function(em){
+          return '<a href="mailto:' + e(em) + '">' + e(em) + '</a>';
+        }).join('<br>') +
+        '</div>' +
+      '</div>' +
+      '<div class="contact-social">' +
+      p.social.map(function(s){
+        return '<a href="' + e(s.url) + '" class="soc-btn" target="_blank" rel="noopener" aria-label="' + e(s.platform) + '">' +
+          '<i class="fab ' + e(s.icon) + '"></i></a>';
+      }).join('') +
+      '</div>';
+  }
 
-        article.querySelector('.skills-grid').innerHTML =
-            columns.map(function (col, ci) {
-                return '<div class="skills-column skills-col-' + ci + '">' +
-                    col.map(function (skill) {
-                        return '<div class="skills-section">' +
-                            '<div class="skills-category-label">' + esc(skill.category) + '</div>' +
-                            '<div class="skill-tags">' +
-                            skill.items.map(function (item) {
-                                return '<span class="skill-tag">' + esc(item) + '</span>';
-                            }).join('') +
-                            '</div></div>';
-                    }).join('') +
-                    '</div>';
-            }).join('');
-    }
+  /* ============================================================
+     FOOTER
+  ============================================================ */
+  function renderFooter(p) {
+    el('footer-social').innerHTML = p.social.map(function(s){
+      return '<li><a href="' + e(s.url) + '" class="soc-btn" target="_blank" rel="noopener" aria-label="' + e(s.platform) + '">' +
+        '<i class="fab ' + e(s.icon) + '"></i></a></li>';
+    }).join('');
+  }
 
-    /* ============================================================
-       EXPERIENCE — timeline
-       ============================================================ */
-    function renderExperience(experience) {
-        document.querySelector('#experience .timeline').innerHTML =
-            experience.map(function (exp) {
-                return '<div class="timeline-item animate-item">' +
-                    '<div class="timeline-dot"></div>' +
-                    '<div class="timeline-meta">' +
-                    '<div class="timeline-title">' +
-                    esc(exp.title) + ' &mdash; ' + esc(exp.company) +
-                    '</div>' +
-                    '<span class="timeline-period">' + esc(exp.period) + '</span>' +
-                    '</div>' +
-                    '<ul class="timeline-bullets">' +
-                    exp.bullets.map(function (b) {
-                        return '<li>' + esc(b) + '</li>';
-                    }).join('') +
-                    '</ul></div>';
-            }).join('');
-    }
+  /* ============================================================
+     CONTACT FORM — Formspree AJAX
+  ============================================================ */
+  function initContactForm(endpoint) {
+    var form    = el('contact-form');
+    var msgEl   = el('form-msg');
+    var submitBtn = el('submit-btn');
+    if (!form) return;
 
-    /* ============================================================
-       PROJECTS — filter tabs + cards
-       ============================================================ */
-    function renderProjects(projects) {
-        var container = document.querySelector('#work .projects-container');
+    form.addEventListener('submit', function(ev){
+      ev.preventDefault();
 
-        /* collect unique categories */
-        var categories = projects.map(function (p) { return p.category; });
+      if (!endpoint || endpoint.includes('YOUR_FORM_ID')) {
+        msgEl.className = 'error';
+        msgEl.textContent = 'Form not configured. Please set formEndpoint in data/portfolio.json (get a free ID at formspree.io).';
+        msgEl.style.display = 'block';
+        return;
+      }
 
-        /* filter tabs */
-        var tabsHtml = '<div class="filter-tabs animate-item">' +
-            '<button class="filter-tab is-active" data-filter="all">All</button>' +
-            categories.map(function (cat) {
-                return '<button class="filter-tab" data-filter="' + esc(cat) + '">' +
-                    esc(cat) + '</button>';
-            }).join('') +
-            '</div>';
+      msgEl.className = '';
+      msgEl.style.display = 'none';
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Sending…';
 
-        /* project cards — all categories flattened */
-        var cardsHtml = '<div class="projects-grid">';
-        projects.forEach(function (cat) {
-            cat.items.forEach(function (proj) {
-                cardsHtml +=
-                    '<div class="project-card animate-item" data-category="' + esc(cat.category) + '">' +
-                    '<div class="project-card-meta">' +
-                    '<h4 class="project-card-title">' + esc(proj.title) + '</h4>' +
-                    '<span class="project-card-period">' + esc(proj.period) + '</span>' +
-                    '</div>' +
-                    '<ul class="project-card-bullets">' +
-                    proj.bullets.map(function (b) {
-                        return '<li>' + esc(b) + '</li>';
-                    }).join('') +
-                    '</ul></div>';
-            });
+      var data = new FormData(form);
+
+      fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' },
+        body: data
+      })
+      .then(function(r){ return r.json().then(function(j){ return { ok: r.ok, body: j }; }); })
+      .then(function(res){
+        if (res.ok) {
+          msgEl.className = 'success';
+          msgEl.textContent = 'Message sent! I\'ll get back to you soon.';
+          form.reset();
+        } else {
+          throw new Error((res.body && res.body.error) || 'Submission failed');
+        }
+      })
+      .catch(function(err){
+        msgEl.className = 'error';
+        msgEl.textContent = err.message || 'Something went wrong. Please email me directly.';
+      })
+      .finally(function(){
+        msgEl.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Message';
+      });
+    });
+  }
+
+  /* ============================================================
+     NAVBAR — scroll + active section highlight
+  ============================================================ */
+  function initNav() {
+    var navbar  = el('navbar');
+    var links   = qsa('.nav-link');
+    var burger  = el('hamburger');
+    var navList = el('nav-links');
+
+    /* scroll: solid bg + active link */
+    var sections = qsa('section[id]');
+    var ticking  = false;
+
+    function onScroll() {
+      if (!ticking) {
+        requestAnimationFrame(function(){
+          navbar.classList.toggle('scrolled', window.scrollY > 40);
+
+          var curr = '';
+          sections.forEach(function(s){
+            if (window.scrollY >= s.offsetTop - 120) curr = s.id;
+          });
+          links.forEach(function(l){
+            l.classList.toggle('active', l.getAttribute('href') === '#' + curr);
+          });
+          ticking = false;
         });
-        cardsHtml += '</div>';
-
-        container.innerHTML = tabsHtml + cardsHtml;
-
-        /* wire up filter tabs */
-        container.querySelectorAll('.filter-tab').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                container.querySelectorAll('.filter-tab').forEach(function (b) {
-                    b.classList.remove('is-active');
-                });
-                btn.classList.add('is-active');
-
-                var filter = btn.dataset.filter;
-                container.querySelectorAll('.project-card').forEach(function (card) {
-                    var show = filter === 'all' || card.dataset.category === filter;
-                    card.classList.toggle('is-hidden', !show);
-                });
-            });
-        });
+        ticking = true;
+      }
     }
+    window.addEventListener('scroll', onScroll, { passive: true });
 
-    /* ============================================================
-       EDUCATION — academics + certifications
-       ============================================================ */
-    function renderEducation(education) {
-        var article = document.querySelector('#about');
+    /* hamburger */
+    burger.addEventListener('click', function(){
+      burger.classList.toggle('open');
+      navList.classList.toggle('open');
+    });
+    navList.addEventListener('click', function(ev){
+      if (ev.target.classList.contains('nav-link')) {
+        burger.classList.remove('open');
+        navList.classList.remove('open');
+      }
+    });
+  }
 
-        article.querySelector('.edu-image').src = education.image;
+  /* ============================================================
+     SCROLL REVEAL — IntersectionObserver
+  ============================================================ */
+  function initScrollReveal() {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12 });
 
-        /* academics grid */
-        article.querySelector('.academics-grid').innerHTML =
-            education.academics.map(function (edu) {
-                return '<div class="edu-card animate-item">' +
-                    '<span class="edu-degree">' + esc(edu.degree) + '</span>' +
-                    '<span class="edu-field">' + esc(edu.field) + ' (' + esc(edu.period) + ')</span>' +
-                    '<a href="' + esc(edu.url) + '" class="edu-link" target="_blank" rel="noopener">' +
-                    esc(edu.institution) + '</a>' +
-                    '<div class="edu-courses">' +
-                    '<div class="edu-courses-label">Courses</div>' +
-                    '<ul>' +
-                    edu.courses.map(function (c) { return '<li>' + esc(c) + '</li>'; }).join('') +
-                    '</ul></div></div>';
-            }).join('');
-
-        /* certifications */
-        article.querySelector('.certifications-list').innerHTML =
-            education.certifications.map(function (cat) {
-                var itemsHtml = cat.items.map(function (cert) {
-                    var inner = '';
-                    if (cert.url) {
-                        inner = '<a href="' + esc(cert.url) + '" class="cert-link" target="_blank" rel="noopener">' +
-                            esc(cert.title) + '</a>';
-                    } else {
-                        inner = '<span class="cert-title">' + esc(cert.title) + '</span>' +
-                            '<div class="cert-meta">' + esc(cert.issuer) +
-                            (cert.period ? ' &nbsp;·&nbsp; ' + esc(cert.period) : '') +
-                            (cert.provider ? ' &nbsp;·&nbsp; ' + esc(cert.provider) : '') +
-                            (cert.instructor ? ' &nbsp;·&nbsp; <em>' + esc(cert.instructor) + '</em>' : '') +
-                            '</div>';
-                        if (cert.modules && cert.modules.length) {
-                            inner += '<ul class="cert-modules">' +
-                                cert.modules.map(function (m) {
-                                    return '<li>' + esc(m) + '</li>';
-                                }).join('') +
-                                '</ul>';
-                        }
-                    }
-                    return '<div class="cert-item animate-item">' + inner + '</div>';
-                }).join('');
-
-                return '<div class="cert-section">' +
-                    '<div class="cert-category-label">' + esc(cat.category) + '</div>' +
-                    itemsHtml + '</div>';
-            }).join('');
+    /* observe all .reveal elements — includes ones injected by render fns */
+    function observe() {
+      qsa('.reveal').forEach(function(el){ io.observe(el); });
     }
-
-    /* ============================================================
-       CONTACT — social icons + contact info
-       ============================================================ */
-    function renderContact(personal) {
-        document.querySelector('#contact .icons').innerHTML =
-            personal.social.map(function (s) {
-                return '<li><a href="' + esc(s.url) + '" class="icon brands ' + esc(s.icon) +
-                    '" target="_blank" rel="noopener"><span class="label">' +
-                    esc(s.platform) + '</span></a></li>';
-            }).join('');
-
-        document.querySelector('#contact .contact-info').innerHTML =
-            'Phone: ' + esc(personal.phone) + '<br>Email:&nbsp;' +
-            personal.emails.map(function (e) {
-                return '<a href="mailto:' + esc(e) + '">' + esc(e) + '</a>';
-            }).join(' &nbsp;/&nbsp; ');
-    }
-
-    /* ============================================================
-       CONTACT — AJAX form submission
-       ============================================================ */
-    function initContactForm() {
-        var form    = document.querySelector('#contact form');
-        var msgEl   = document.querySelector('#contact .form-message');
-        var submitBtn = form ? form.querySelector('[type="submit"]') : null;
-        if (!form) return;
-
-        form.addEventListener('submit', function (e) {
-            e.preventDefault();
-
-            msgEl.className = 'form-message';
-            msgEl.textContent = '';
-            submitBtn.disabled = true;
-            submitBtn.value = 'Sending…';
-
-            var data = new FormData(form);
-
-            fetch('phpman.php', {
-                method: 'POST',
-                headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                body: data
-            })
-            .then(function (r) { return r.json(); })
-            .then(function (res) {
-                if (res.success) {
-                    msgEl.textContent = res.message || 'Message sent! I will get back to you soon.';
-                    msgEl.classList.add('is-success');
-                    form.reset();
-                } else {
-                    throw new Error(res.message || 'Unknown error');
-                }
-            })
-            .catch(function (err) {
-                msgEl.textContent = err.message || 'Failed to send message. Please try emailing directly.';
-                msgEl.classList.add('is-error');
-            })
-            .finally(function () {
-                submitBtn.disabled = false;
-                submitBtn.value = 'Send Message';
-            });
-        });
-    }
+    /* run once now, then again after a tick to catch dynamically injected nodes */
+    observe();
+    setTimeout(observe, 100);
+  }
 
 })();
