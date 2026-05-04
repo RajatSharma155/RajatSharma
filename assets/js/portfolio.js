@@ -8,13 +8,17 @@
 
   /* ── category → slug map ────────────────────────────────── */
   var CAT_SLUG = {
+    'Computer Architecture':                     'arch',
     'Computer Architecture / Microarchitecture': 'arch',
+    'RTL / ASIC / VLSI':                         'vlsi',
     'VLSI Design / RTL / ASIC':                  'vlsi',
     'Verification':                              'verif',
     'Robotics / Embedded':                       'robot'
   };
   var CAT_LABEL = {
+    'Computer Architecture':                     'Computer Architecture',
     'Computer Architecture / Microarchitecture': 'Computer Architecture',
+    'RTL / ASIC / VLSI':                         'RTL / ASIC / VLSI',
     'VLSI Design / RTL / ASIC':                  'VLSI / RTL / ASIC',
     'Verification':                              'Verification',
     'Robotics / Embedded':                       'Robotics'
@@ -28,6 +32,7 @@
   /* ── boot ────────────────────────────────────────────────── */
   var d = PORTFOLIO_DATA;
   renderHero(d.personal);
+  wireResumeBtn(d.personal.resumeFile);
   renderSkills(d.skills);
   renderExperience(d.experience);
   renderProjects(d.projects);
@@ -55,6 +60,16 @@
         '<span class="hero-stat-label">' + e(s.label) + '</span>' +
         '</div>';
     }).join('');
+  }
+
+  /* ============================================================
+     RESUME BUTTON
+  ============================================================ */
+  function wireResumeBtn(file) {
+    var btn = el('resume-btn');
+    if (!btn) return;
+    if (file) { btn.href = file; }
+    else { btn.style.display = 'none'; }
   }
 
   /* ============================================================
@@ -173,11 +188,21 @@
   ============================================================ */
   function renderEducation(edu) {
     el('edu-grid').innerHTML = edu.academics.map(function(a){
+      var gpaHtml = a.gpa ? '<span class="edu-gpa">' + e(a.gpa) + ' GPA</span>' : '';
+      var locHtml = a.location ? '<span class="edu-loc"><i class="fas fa-map-marker-alt"></i> ' + e(a.location) + '</span>' : '';
       return '<div class="edu-card reveal">' +
-        '<div class="edu-degree">' + e(a.degree) + '</div>' +
-        '<div class="edu-field">' + e(a.field) + '</div>' +
-        '<div class="edu-period">' + e(a.period) + '</div>' +
-        '<a href="' + e(a.url) + '" class="edu-inst" target="_blank" rel="noopener">' + e(a.institution) + '</a>' +
+        '<div class="edu-card-header">' +
+          '<div>' +
+            '<div class="edu-degree">' + e(a.degree) + '</div>' +
+            '<div class="edu-field">' + e(a.field) + '</div>' +
+          '</div>' +
+          (gpaHtml ? '<div class="edu-gpa-wrap">' + gpaHtml + '</div>' : '') +
+        '</div>' +
+        '<div class="edu-meta">' +
+          '<span class="edu-period">' + e(a.period) + '</span>' +
+          locHtml +
+        '</div>' +
+        '<a href="' + e(a.url) + '" class="edu-inst" target="_blank" rel="noopener"><i class="fas fa-graduation-cap"></i> ' + e(a.institution) + '</a>' +
         '<div class="edu-courses-label">Relevant Courses</div>' +
         '<ul class="edu-courses-list">' +
         a.courses.map(function(c){ return '<li>' + e(c) + '</li>'; }).join('') +
