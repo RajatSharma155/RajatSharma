@@ -168,17 +168,17 @@
         ctx.restore();
       });
 
-      /* subtle animated wave across the bottom third */
+      /* wave 1 — indigo */
       ctx.save();
-      ctx.globalAlpha = 0.04;
+      ctx.globalAlpha = 0.16;
       ctx.fillStyle = '#6366f1';
-      var waveBase = H * 0.78;
+      var waveBase = H * 0.74;
       ctx.beginPath();
       ctx.moveTo(0, H);
       for (var i = 0; i <= W; i += 4) {
         var wy = waveBase +
-          Math.sin((i / W * 3 + frame * 0.006) * Math.PI) * 28 +
-          Math.sin((i / W * 7 - frame * 0.003) * Math.PI) * 14;
+          Math.sin((i / W * 3 + frame * 0.006) * Math.PI) * 42 +
+          Math.sin((i / W * 7 - frame * 0.003) * Math.PI) * 20;
         ctx.lineTo(i, wy);
       }
       ctx.lineTo(W, H);
@@ -186,17 +186,17 @@
       ctx.fill();
       ctx.restore();
 
-      /* second wave (pink) */
+      /* wave 2 — pink */
       ctx.save();
-      ctx.globalAlpha = 0.03;
+      ctx.globalAlpha = 0.13;
       ctx.fillStyle = '#ec4899';
-      var waveBase2 = H * 0.85;
+      var waveBase2 = H * 0.83;
       ctx.beginPath();
       ctx.moveTo(0, H);
       for (var j = 0; j <= W; j += 4) {
         var wy2 = waveBase2 +
-          Math.sin((j / W * 5 - frame * 0.004) * Math.PI) * 22 +
-          Math.sin((j / W * 9 + frame * 0.007) * Math.PI) * 10;
+          Math.sin((j / W * 5 - frame * 0.004) * Math.PI) * 32 +
+          Math.sin((j / W * 9 + frame * 0.007) * Math.PI) * 15;
         ctx.lineTo(j, wy2);
       }
       ctx.lineTo(W, H);
